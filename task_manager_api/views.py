@@ -1,6 +1,7 @@
 from django.db.models import Q
 from rest_framework import generics, mixins, permissions, viewsets
 from rest_framework.exceptions import ParseError
+from rest_framework.pagination import LimitOffsetPagination
 
 from .models import StatusChoices, Task, TaskTypeChoices
 from .serializers import TaskSerializer, UserRegistrationSerializer
@@ -20,6 +21,7 @@ class TaskViewSet(
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Task.objects.all()
+    pagination_class = LimitOffsetPagination
 
     def perform_create(self, serializer):
         active_statuses = [StatusChoices.PENDING, StatusChoices.RUNNING]
@@ -38,4 +40,17 @@ class TaskViewSet(
             countdown_task.delay(task.id)
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+        queryset = self.queryset.filter(user=self.request.user)
+
+        statuses = self.request.query_params.get("status")
+        if statuses:
+            status_list = statuses.split(",")
+            valid_statuses = [
+                status
+                for status in status_list
+                if status in StatusChoices.values
+            ]
+            if valid_statuses:
+                queryset = queryset.filter(status__in=valid_statuses)
+
+        return queryset
