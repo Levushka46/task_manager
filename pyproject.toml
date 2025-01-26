@@ -1,0 +1,23 @@
+[tool.black]
+line-length = 79
+target-version = ["py38"]  # укажите вашу версию Python
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | build
+    | dist
+    | migrations  # Исключить папку с миграциями
+)/
+'''
+
+[tool.isort]
+profile = "black"
+known_first_party = ["task_manager"]  # укажите название проекта
+line_length = 79
+skip = ["migrations", ".venv"]
