@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: task_manager
+    command: /app/start.sh
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - redis
+      - db
+
+  db:
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "task_manager_db"
+      POSTGRES_USER: "task_manager"
+      POSTGRES_PASSWORD: "12345"
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:latest
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: task_manager_celery_worker
+    command: /app/start-celery-worker.sh
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db

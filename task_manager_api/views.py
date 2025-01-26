@@ -1,4 +1,5 @@
-from rest_framework import generics, permissions, mixins, viewsets
+from rest_framework import generics, permissions, mixins, viewsets, serializers
+from rest_framework.exceptions import ParseError
 from .models import Task
 from .serializers import TaskSerializer, UserRegistrationSerializer
 from django.db.models import Q
@@ -16,12 +17,12 @@ class TaskViewSet(mixins.CreateModelMixin,mixins.ListModelMixin,mixins.RetrieveM
             user=self.request.user,
             status__in=['pending', 'running']
         ).count()
-        
+
         if active_tasks >= 5:
-            raise serializers.ValidationError("Достигнут лимит активных задач (5)")
-        
+            raise ParseError("Достигнут лимит активных задач (5)")
+
         task = serializer.save(user=self.request.user)
-        
+
         if task.task_type == 'sum_numbers':
             sum_numbers_task.delay(task.id)
         elif task.task_type == 'countdown':
