@@ -10,7 +10,7 @@ STATUS_CHOICES = [
 ]
 
 class Task(models.Model):
-    user =  models.ForeignKey(User,on_delete =  models.CASADE)
+    user =  models.ForeignKey(User, on_delete = models.CASCADE)
     task_type = models.CharField(max_length=100)
     input_data = models.JSONField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
