@@ -1,8 +1,8 @@
 from django.db.models import Q
-from rest_framework import generics, mixins, permissions, serializers, viewsets
+from rest_framework import generics, mixins, permissions, viewsets
 from rest_framework.exceptions import ParseError
 
-from .models import Task
+from .models import StatusChoices, Task, TaskTypeChoices
 from .serializers import TaskSerializer, UserRegistrationSerializer
 from .tasks import countdown_task, sum_numbers_task
 
@@ -19,10 +19,12 @@ class TaskViewSet(
 ):
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated]
+    queryset = Task.objects.all()
 
     def perform_create(self, serializer):
+        active_statuses = [StatusChoices.PENDING, StatusChoices.RUNNING]
         active_tasks = Task.objects.filter(
-            user=self.request.user, status__in=["pending", "running"]
+            user=self.request.user, status__in=active_statuses
         ).count()
 
         if active_tasks >= 5:
@@ -30,10 +32,10 @@ class TaskViewSet(
 
         task = serializer.save(user=self.request.user)
 
-        if task.task_type == "sum_numbers":
+        if task.task_type == TaskTypeChoices.SUM_NUMBERS:
             sum_numbers_task.delay(task.id)
-        elif task.task_type == "countdown":
+        elif task.task_type == TaskTypeChoices.COUNTDOWN:
             countdown_task.delay(task.id)
 
     def get_queryset(self):
-        return Task.objects.filter(user=self.request.user)
+        return self.queryset.filter(user=self.request.user)
